@@ -1,0 +1,44 @@
+{
+  "lr": {
+    "_type": "choice",
+    "_value": [
+      0.001, 0.0001
+    ]
+  },
+  "batch_size": {
+    "_type": "choice",
+    "_value": [
+      16,32,64,128,256
+    ]
+  },
+  "seed": {
+    "_type": "choice",
+    "_value": [
+      0, 1, 2, 3, 4
+    ]
+  },
+  "data_index": {
+    "_type": "choice",
+    "_value": [
+      4
+    ]
+  },
+  "loss1": {
+    "_type": "uniform",
+    "_value": [
+      0.0, 1.0
+    ]
+  },
+  "loss2": {
+    "_type": "uniform",
+    "_value": [
+      0.0, 1.0
+    ]
+  },
+  "loss3": {
+    "_type": "uniform",
+    "_value": [
+      0.0, 1.0
+    ]
+  }
+}

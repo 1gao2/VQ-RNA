@@ -18,9 +18,9 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 from termcolor import colored
-from length.mymodel_201 import Lucky
+from length.VQRNA_length1001 import VQRNA
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def read_fasta(file):
@@ -41,47 +41,21 @@ def read_fasta(file):
     return seq, label
 
 def read_file(data_type, file_index):
-    datas_neg = pd.read_csv(f"../data/other/{data_type}/{file_index}-0.csv")
-    datas_pos = pd.read_csv(f"../data/other/{data_type}/{file_index}-1.csv")
-    seq = list(datas_neg['data']) + list(datas_pos['data'])
-    label = list(datas_neg['label']) + list(datas_pos['label'])
 
-    seq = [s.replace(' ', '').replace('U', 'T') for s in seq]
+    datas_neg = f"../data/{data_type}/{file_index}-0.fasta"
+    neg_seq, neg_label = read_fasta(datas_neg)
+    datas_pos = f"../data/{data_type}/{file_index}-1.fasta"
+    pos_seq, pos_label = read_fasta(datas_pos)
+    seq = list(neg_seq) + list(pos_seq)
+    label = list(neg_label) + list(pos_label)
 
     return seq, label
-
-# def encode_sequence_1mer(sequences, max_seq):
-#     k = 1
-#     overlap = False
-#
-#     all_kmer = [''.join(p) for p in itertools.product(['A', 'T', 'C', 'G', '-'], repeat=k)]
-#     kmer_dict = {all_kmer[i]: i for i in range(len(all_kmer))}
-#
-#     encoded_sequences = []
-#     if overlap:
-#         max_length = max_seq - k + 1
-#
-#     else:
-#         max_length = max_seq // k
-#
-#     for seq in sequences:
-#         encoded_seq = []
-#         start_site = len(seq) // 2 - max_length // 2
-#         for i in range(start_site, start_site + max_length, k):
-#             encoded_seq.append(kmer_dict[seq[i:i+k]])
-#
-#         encoded_sequences.append(encoded_seq+[0]*(max_length-len(encoded_seq)))
-#
-#     return np.array(encoded_sequences)
-
-import itertools
-import numpy as np
 
 def encode_sequence_1mer(sequences, max_seq):
     k = 1
     overlap = False
 
-    # 生成所有可能的k-mer字典，包含 'A', 'T', 'C', 'G', '-'
+    # Generate all possible k-mer dictionaries containing 'A', 'T', 'C', 'G', and '-'
     all_kmer = [''.join(p) for p in itertools.product(['A', 'T', 'C', 'G', '-'], repeat=k)]
     kmer_dict = {all_kmer[i]: i for i in range(len(all_kmer))}
 
@@ -96,26 +70,25 @@ def encode_sequence_1mer(sequences, max_seq):
         start_site = len(seq) // 2 - max_length // 2
         for i in range(start_site, start_site + max_length, k):
             kmer = seq[i:i + k]
-            # 跳过包含 'N' 的k-mer
+            # Skip k-mers containing 'N'
             if 'N' in kmer:
-                continue  # 跳过含 'N' 的片段
+                continue
             encoded_seq.append(kmer_dict[kmer])
 
-        # 填充到 max_length
+        # Pad to max_length
         encoded_sequences.append(encoded_seq + [0] * (max_length - len(encoded_seq)))
 
     return np.array(encoded_sequences)
 
 
 def to_log(log, params):
-    with open(f"../results/length/length201/data{params['data_index']}/seed{params['seed']}.log", "a+") as f:
+    with open(f"../results/length/length1001/data{params['data_index']}/seed{params['seed']}.log", "a+") as f:
         f.write(log + '\n')
-
 # ========================================================================================
 
 def train_model(train_loader, valid_loader, test_loader, params ,data_variance):
     # Define model
-    model = Lucky().to(device)
+    model = VQRNA().to(device)
 
     # Optimizer and loss
     opt = optim.Adam(model.parameters(), lr=params['lr'])
@@ -137,13 +110,9 @@ def train_model(train_loader, valid_loader, test_loader, params ,data_variance):
             logits, _, vq_loss, data_recon, perplexity = model(seq)
             loss_CE = criterion_CE(logits, label)
 
-            #recon_error = F.cross_entropy(data_recon.float(), seq.float()) / data_variance
-            # recon_error = F.binary_cross_entropy_with_logits(data_recon.float(), seq.float()) / data_variance
-            #data_recon = F.one_hot(data_recon, num_classes=4)
             seq = F.one_hot(seq, num_classes=4)
-            #data_recon = F.one_hot(data_recon, num_classes=4)
             recon_error = F.mse_loss(data_recon.float(), seq.float())
-            #recon_error = criterion_CE(data_recon.float(), seq.float())
+
             loss = loss_CE*loss1 + vq_loss*loss2 + recon_error*loss3
             # loss = loss_CE
             #print(f"loss_CE: {loss_CE.item()}, recon_error: {recon_error.item()}, vq_loss: {vq_loss.item()}")
@@ -177,7 +146,7 @@ def train_model(train_loader, valid_loader, test_loader, params ,data_variance):
             checkpoint = {
                 'state_dict': model.state_dict()}
 
-            torch.save(checkpoint, f"../save/motif/length201/data{params['data_index']}/seed{params['seed']}.pth")
+            torch.save(checkpoint, f"../save/length/length1001/data{params['data_index']}/seed{params['seed']}.pth")
 
         else:
             now_epoch += 1
@@ -331,7 +300,7 @@ def main():
             'lr': 0.001,
             'batch_size': 32,
             'epoch': 300,
-            'seq_len': 201,
+            'seq_len': 1001,
             'saved_model_name': 'diff_len_',
             'seed': 2,
             'data_index': index,
