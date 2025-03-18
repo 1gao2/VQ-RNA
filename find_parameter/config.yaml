@@ -1,0 +1,42 @@
+# Basic Settings
+authorName: VQRNA
+experimentName: gwj
+
+trialConcurrency: 12  # Required. Specifies the maximum number of concurrent Trial tasks.
+# ! If trialGpuNum exceeds the number of available GPUs and the number of concurrent Trial tasks has not yet reached trialConcurrency,
+# the Trial tasks will be queued, waiting for GPU resources to be allocated.
+
+maxExecDuration: 999d  # Optional. Maximum duration for the entire tuning process. Default: 999d.
+maxTrialNum: 100  # Optional. Maximum number of Trial tasks created by NNI. Default: 99999.
+trainingServicePlatform: local  # Specifies the platform for running the Experiment, including local, remote, pai, kubeflow, frameworkcontroller.
+#experimentWorkingDirectory: .
+
+# Search Space File
+searchSpacePath: search_space.json
+useAnnotation: false  # If useAnnotation is set to true, the searchSpacePath field will be ignored.
+
+# Logging
+logDir: ./log  # Optional. Path to the log directory. Default: <user home directory>/nni-experiments.
+#logDir: ../nni-experiments
+logLevel: info
+
+# Tuner
+tuner:
+#  builtinTunerName: GridSearch  # Specifies the tuning algorithm
+  builtinTunerName: TPE  # Specifies the built-in tuning algorithm
+  classArgs:
+    optimize_mode: maximize  # Whether to maximize or minimize the objective parameter.
+#    optimize_mode: minimize
+
+# Command to run and the path to the Trial code
+trial:
+  command: python train_parameter.py
+#  command: python finetune_nni.py
+  codeDir: .  # Required string. Specifies the directory of the Trial files.
+  gpuNum: 1  # Optional, integer. Specifies the number of GPUs used per Trial process. Default is 0.
+
+# Local mode configuration (Optional)
+localConfig:
+  gpuIndices: 0,1  # Default: none. When set, only the specified GPUs will be used for running Trial tasks.
+  maxTrialNumPerGpu: 6  # Default: 1. Specifies the maximum number of concurrent trials per GPU.
+  useActiveGpu: True  # Default: false. Whether to use GPUs that are already occupied by other processes.
