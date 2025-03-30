@@ -59,4 +59,4 @@ The Output will be saved in the following forms:
 
 
 # Contact 
-If you have any questions, you can contact me from the email: <202315263@mail.sdu.edu.cn>
+If you have any questions, you can contact me from the email: <202315263@mail.sdu.edu.cn>.
